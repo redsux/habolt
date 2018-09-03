@@ -14,7 +14,9 @@
 
 # Examples
 examples/*
-examples/*.go
+!examples/*.go
+!examples/Dockerfile
+!examples/docker-compose.yml
 
 # vendor
 vendor/*

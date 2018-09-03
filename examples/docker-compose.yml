@@ -1,0 +1,30 @@
+version: '3.5'
+
+services:
+  image:
+    build:
+      context: ../
+      dockerfile: examples/Dockerfile
+      args:
+        http_proxy: ${http_proxy}
+        https_proxy: ${https_proxy}
+        no_proxy: ${no_proxy}
+    image: habolt-example
+  
+  node1:
+    image: habolt-example
+    container_name: node1
+  
+  node2:
+    image: habolt-example
+    container_name: node2
+    command: -members node1:10001
+
+  node3:
+    image: habolt-example
+    container_name: node3
+    command: -members node1:10001
+
+networks:
+  default:
+    name: net-habolt-example

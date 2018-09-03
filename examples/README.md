@@ -2,16 +2,19 @@
 
 ## Build
 
-In "habolt" repository :
+Create image :
 
-`govendor sync`
-
-`CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o examples/node examples/node.go`
+`docker-compose build image`
 
 ## Run node 1
 
-`./node -serfPort 10001 -db ./node1.db`
+`docker-compose up -d node1`
 
-## Run node X
+## Run node2 & node3
 
-`./node -serfPort X0001 -members *IP*:10001 -db ./nodeX.db`
+`docker-compose up -d node2 node3`
+
+
+## Check logs
+
+`docker-compose logs -f`
