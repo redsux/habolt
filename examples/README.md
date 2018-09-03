@@ -14,4 +14,4 @@ In "habolt" repository :
 
 ## Run node X
 
-`./node -serfPort 2000X -members *IP*:10001 -db ./nodeX.db`
+`./node -serfPort X0001 -members *IP*:10001 -db ./nodeX.db`
