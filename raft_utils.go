@@ -31,7 +31,7 @@ func (has *HaStore) initRaft() (err error) {
 	raftConf.LocalID = raft.ServerID(raftAddr)
 	raftConf.LogOutput = has.LogOutput
 
-	has.raftServer, err = raft.NewRaft(raftConf, &fsm{}, raftStore, raftStore, raftSnaps, raftTrans)
+	has.raftServer, err = raft.NewRaft(raftConf, (*fsm)(has), raftStore, raftStore, raftSnaps, raftTrans)
 	return
 }
 

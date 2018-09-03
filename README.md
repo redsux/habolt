@@ -1,4 +1,4 @@
-# ADDD
+# High Availability Bolt Key-Value Store
 
 Bolt with High-Availability
 

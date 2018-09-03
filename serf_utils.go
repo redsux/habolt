@@ -9,13 +9,6 @@ import (
 	"github.com/hashicorp/serf/serf"
 )
 
-type command struct {
-	Op    string `json:"op,omitempty"`
-	Key   string `json:"key,omitempty"`
-	Value string `json:"value,omitempty"`
-	Addr  string `json:"addr,omitempty"`
-}
-
 func (has *HaStore) initSerf() (err error) {
 	has.serfEvents = make(chan serf.Event, 16)
 

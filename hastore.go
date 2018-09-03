@@ -1,6 +1,7 @@
 package habolt
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -14,12 +15,13 @@ const (
 	retainSnapshotCount = 2
 	raftStoreFileName   = "raft.db"
 	raftTimeout         = 10 * time.Second
+	raftUserEventName   = "us_hastore_apply"
 )
 
 type HaStore struct {
 	mutex	   sync.Mutex
 	
-	//Store	   *Store
+	store	   *Store
 
 	Address    string
 	Port       int
@@ -32,8 +34,13 @@ type HaStore struct {
 	serfEvents chan serf.Event
 }
 
-func NewHaStore(addr string, port int) (*HaStore, error) {
+func NewHaStore(addr string, port int, opts Options) (*HaStore, error) {
+	db, err := NewStore(opts)
+	if err != nil {
+		return nil, err
+	}
 	obj := &HaStore{
+		store: db,
 		Address: addr,
 		Port: port,
 		LogOutput: NewHaOuput(LVL_INFO),
@@ -76,8 +83,10 @@ func (has *HaStore) Start(peers ...string) error {
 						return err
 					}
 				case serf.UserEvent :
-					if fut := has.raftServer.Apply(evt.Payload, raftTimeout); fut.Error() != nil {
-						// ?
+					if evt.Name == raftUserEventName {
+						if fut := has.raftServer.Apply(evt.Payload, raftTimeout); fut.Error() != nil {
+							// ?
+						}
 					}
 				}
 			}
@@ -85,19 +94,41 @@ func (has *HaStore) Start(peers ...string) error {
 	}
 }
 
-func (has *HaStore) List() error {
-	return nil
+func (has *HaStore) List(values interface{}) error {
+	has.mutex.Lock()
+	defer has.mutex.Unlock()
+	return has.store.List(values)
 }
 
-func (has *HaStore) Get(key string) error {
-	return nil
+func (has *HaStore) Get(key string, value interface{}) error {
+	has.mutex.Lock()
+	defer has.mutex.Unlock()
+	return has.store.Get(key, value)
 }
 
-func (has *HaStore) Set(key, value string) error {
-	msg := fmt.Sprintf(`{ "from": "%v", "key": "%s", "value": "%s" }`, has.Port, key, value)
-	return has.serfServer.UserEvent("set", []byte(msg), false)
+func (has *HaStore) Set(key string, value interface{}) error {
+	c := &command{
+		Op:    "set",
+		Key:   key,
+		Value: value,
+		Addr:  has.RaftAddr(),
+	}
+	msg, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return has.serfServer.UserEvent(raftUserEventName, msg, false)
 }
 
 func (has *HaStore) Delete(key string) error {
-	return nil
+	c := &command{
+		Op:    "del",
+		Key:   key,
+		Addr:  has.RaftAddr(),
+	}
+	msg, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return has.serfServer.UserEvent(raftUserEventName, msg, false)
 }

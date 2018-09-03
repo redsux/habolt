@@ -87,18 +87,16 @@
 			"revisionTime": "2018-08-09T14:17:58Z"
 		},
 		{
-			"checksumSHA1": "XEV3BI3nHA/rNa/tIgB7fVCrDww=",
-			"origin": "github.com/fatih/color/vendor/github.com/mattn/go-colorable",
+			"checksumSHA1": "SEnjvwVyfuU2xBaOfXfwPD5MZqk=",
 			"path": "github.com/mattn/go-colorable",
-			"revision": "2d684516a8861da43017284349b7e303e809ac21",
-			"revisionTime": "2018-05-16T10:03:07Z"
+			"revision": "efa589957cd060542a26d2dd7832fd6a6c6c3ade",
+			"revisionTime": "2018-03-10T13:32:14Z"
 		},
 		{
-			"checksumSHA1": "y/A5iuvwjytQE2CqVuphQRXR2nI=",
-			"origin": "github.com/fatih/color/vendor/github.com/mattn/go-isatty",
+			"checksumSHA1": "GiVgQkx5acnq+JZtYiuHPlhHoso=",
 			"path": "github.com/mattn/go-isatty",
-			"revision": "2d684516a8861da43017284349b7e303e809ac21",
-			"revisionTime": "2018-05-16T10:03:07Z"
+			"revision": "3fb116b820352b7f0c281308a4d6250c22d94e27",
+			"revisionTime": "2018-08-30T10:17:45Z"
 		},
 		{
 			"checksumSHA1": "QKPYBt8x1OP9RV7knJHu6cSQjlQ=",
@@ -114,59 +112,51 @@
 		},
 		{
 			"checksumSHA1": "2LpxYGSf068307b7bhAuVjvzLLc=",
-			"origin": "github.com/miekg/dns/vendor/golang.org/x/crypto/ed25519",
 			"path": "golang.org/x/crypto/ed25519",
-			"revision": "9a34f54f7a0fff45ef7272ab019a25cc0b0aefbd",
-			"revisionTime": "2018-08-30T06:41:33Z"
+			"revision": "182538f80094b6a8efaade63a8fd8e0d9d5843dd",
+			"revisionTime": "2018-08-30T18:34:03Z"
 		},
 		{
 			"checksumSHA1": "0JTAFXPkankmWcZGQJGScLDiaN8=",
-			"origin": "github.com/miekg/dns/vendor/golang.org/x/crypto/ed25519/internal/edwards25519",
 			"path": "golang.org/x/crypto/ed25519/internal/edwards25519",
-			"revision": "9a34f54f7a0fff45ef7272ab019a25cc0b0aefbd",
-			"revisionTime": "2018-08-30T06:41:33Z"
+			"revision": "182538f80094b6a8efaade63a8fd8e0d9d5843dd",
+			"revisionTime": "2018-08-30T18:34:03Z"
 		},
 		{
 			"checksumSHA1": "NjyXtXsaf0ulRJn6HQSP1FqGL4A=",
-			"origin": "github.com/miekg/dns/vendor/golang.org/x/net/bpf",
 			"path": "golang.org/x/net/bpf",
-			"revision": "9a34f54f7a0fff45ef7272ab019a25cc0b0aefbd",
-			"revisionTime": "2018-08-30T06:41:33Z"
+			"revision": "8a410e7b638dca158bf9e766925842f6651ff828",
+			"revisionTime": "2018-08-25T16:15:26Z"
 		},
 		{
 			"checksumSHA1": "8oJoT8rfokzpkJ19eNhRs2JgRxI=",
-			"origin": "github.com/miekg/dns/vendor/golang.org/x/net/internal/iana",
 			"path": "golang.org/x/net/internal/iana",
-			"revision": "9a34f54f7a0fff45ef7272ab019a25cc0b0aefbd",
-			"revisionTime": "2018-08-30T06:41:33Z"
+			"revision": "8a410e7b638dca158bf9e766925842f6651ff828",
+			"revisionTime": "2018-08-25T16:15:26Z"
 		},
 		{
 			"checksumSHA1": "YsXlbexuTtUXHyhSv927ILOkf6A=",
-			"origin": "github.com/miekg/dns/vendor/golang.org/x/net/internal/socket",
 			"path": "golang.org/x/net/internal/socket",
-			"revision": "9a34f54f7a0fff45ef7272ab019a25cc0b0aefbd",
-			"revisionTime": "2018-08-30T06:41:33Z"
+			"revision": "8a410e7b638dca158bf9e766925842f6651ff828",
+			"revisionTime": "2018-08-25T16:15:26Z"
 		},
 		{
-			"checksumSHA1": "sO3eKeIVIRXaRtmWbqGihYpJXpg=",
-			"origin": "github.com/miekg/dns/vendor/golang.org/x/net/ipv4",
+			"checksumSHA1": "K4XNY0c60IPBpv5sO6aiCuB8o/0=",
 			"path": "golang.org/x/net/ipv4",
-			"revision": "9a34f54f7a0fff45ef7272ab019a25cc0b0aefbd",
-			"revisionTime": "2018-08-30T06:41:33Z"
+			"revision": "8a410e7b638dca158bf9e766925842f6651ff828",
+			"revisionTime": "2018-08-25T16:15:26Z"
 		},
 		{
-			"checksumSHA1": "xqt5auCDSuvg5dm07p60loM67/A=",
-			"origin": "github.com/miekg/dns/vendor/golang.org/x/net/ipv6",
+			"checksumSHA1": "hDszlYGI8m9puPsEIDr59ccTiF8=",
 			"path": "golang.org/x/net/ipv6",
-			"revision": "9a34f54f7a0fff45ef7272ab019a25cc0b0aefbd",
-			"revisionTime": "2018-08-30T06:41:33Z"
+			"revision": "8a410e7b638dca158bf9e766925842f6651ff828",
+			"revisionTime": "2018-08-25T16:15:26Z"
 		},
 		{
-			"checksumSHA1": "hEYaWw+8NP4vlt/idQaUfg3cWdM=",
-			"origin": "github.com/fatih/color/vendor/golang.org/x/sys/unix",
+			"checksumSHA1": "fg6cP5KbsnnxyZshqa32ZT9DgKk=",
 			"path": "golang.org/x/sys/unix",
-			"revision": "2d684516a8861da43017284349b7e303e809ac21",
-			"revisionTime": "2018-05-16T10:03:07Z"
+			"revision": "fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a",
+			"revisionTime": "2018-08-31T08:14:39Z"
 		}
 	],
 	"rootPath": "github.com/redsux/habolt"
