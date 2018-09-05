@@ -28,15 +28,19 @@ var (
 	}
 )
 
-type HaOutput struct {
+type HabOutput struct {
     level int
 }
 
-func NewHaOuput(l int) *HaOutput {
-	return &HaOutput{level: l}
+func NewOutput(l int) *HabOutput {
+	return &HabOutput{level: l}
 }
 
-func (hao *HaOutput) Write(p []byte) (n int, err error) {	
+func (hao *HabOutput) Level(l int) {
+	hao.level = l
+}
+
+func (hao *HabOutput) Write(p []byte) (n int, err error) {	
 	for k, v := range level_filter {
 		if bytes.Contains(p, []byte(k)) {
 			if hao.level > v {

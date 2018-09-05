@@ -1,7 +1,6 @@
 package habolt
 
 import (
-	//"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/memberlist"
@@ -15,13 +14,14 @@ func (has *HaStore) initSerf() (err error) {
 	memberlistConfig := memberlist.DefaultLANConfig()
 	memberlistConfig.BindAddr = has.Address
 	memberlistConfig.BindPort = has.Port
-	memberlistConfig.LogOutput = has.LogOutput
+	memberlistConfig.Logger = has.store.logger
 
 	serfConfig := serf.DefaultConfig()
 	serfConfig.NodeName = has.SerfAddr()
 	serfConfig.EventCh = has.serfEvents
 	serfConfig.MemberlistConfig = memberlistConfig
-	serfConfig.LogOutput = has.LogOutput
+	serfConfig.Logger = has.store.logger
+
 
 	has.serfServer, err = serf.Create(serfConfig)
 	return

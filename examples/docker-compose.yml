@@ -14,16 +14,17 @@ services:
   node1:
     image: habolt-example
     container_name: node1
+    command: -name node1
   
   node2:
     image: habolt-example
     container_name: node2
-    command: -members node1:10001
+    command: -members node1:10001 -name node2
 
   node3:
     image: habolt-example
     container_name: node3
-    command: -members node1:10001
+    command: -members node1:10001 -name node3
 
 networks:
   default:

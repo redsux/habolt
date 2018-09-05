@@ -3,7 +3,6 @@ package habolt
 import (
 	"encoding/json"
 	"io"
-	"github.com/fatih/color"
 	"github.com/hashicorp/raft"
 )
 
@@ -17,13 +16,13 @@ type command struct {
 type fsm HaStore
 
 func (f *fsm) Apply(l *raft.Log) interface{} {
-	color.Green( "[INFO] Apply %s", string(l.Data) )
+	f.store.logger.Printf( "[DEBUG] raft-fsm: Apply %s\n", string(l.Data) )
 	var (
 		c command
 		e error
 	)
 	if err := json.Unmarshal(l.Data, &c); err != nil {
-		color.Red("failed to unmarshal command: %s", err.Error())
+		f.store.logger.Printf( "[ERR] raft-fsm: Failed to unmarshal command: %s", err.Error())
 	}
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -36,7 +35,7 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case "delete":
 		e = f.store.Delete(c.Key)
 	default:
-		color.Red("unrecognized command op: %s", c.Op)
+		f.store.logger.Printf( "[ERR] raft-fsm: Unrecognized command op: %s", c.Op)
 	}
 
 	return e
@@ -60,7 +59,7 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	// Clone the kvstore into a map for easy transport
 	mapClone := make(map[string]string)
 	
-	curs := tx.Bucket(dbBucket).Cursor()
+	curs := tx.Bucket(f.store.bucket).Cursor()
 	for key, val := curs.First(); key != nil; key, val = curs.Next() {
 		mapClone[ string(key) ] = string(val)
 	}
@@ -83,11 +82,11 @@ func (f *fsm) Restore(kvMap io.ReadCloser) error {
 	}
 	defer tx.Rollback()
 	
-	if err := tx.DeleteBucket(dbBucket); err != nil {
+	if err := tx.DeleteBucket(f.store.bucket); err != nil {
 		return err
 	}
 
-	bucket, err := tx.CreateBucketIfNotExists(dbBucket)
+	bucket, err := tx.CreateBucketIfNotExists(f.store.bucket)
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,6 @@ package habolt
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"sync"
 	"time"
 
@@ -26,8 +25,6 @@ type HaStore struct {
 	Address    string
 	Port       int
 
-	LogOutput  io.Writer
-
 	raftServer *raft.Raft
 	serfServer *serf.Serf
 
@@ -43,7 +40,6 @@ func NewHaStore(addr string, port int, opts Options) (*HaStore, error) {
 		store: db,
 		Address: addr,
 		Port: port,
-		LogOutput: NewHaOuput(LVL_INFO),
 	}
 	if err := obj.initSerf(); err != nil {
 		return nil, err
@@ -52,6 +48,10 @@ func NewHaStore(addr string, port int, opts Options) (*HaStore, error) {
 		return nil, err
 	}
 	return obj, nil
+}
+
+func (has *HaStore) LogLevel(level int) {
+	has.store.LogLevel(level)
 }
 
 func (has *HaStore) SerfAddr() string {
@@ -84,8 +84,9 @@ func (has *HaStore) Start(peers ...string) error {
 					}
 				case serf.UserEvent :
 					if evt.Name == raftUserEventName {
-						if fut := has.raftServer.Apply(evt.Payload, raftTimeout); fut.Error() != nil {
-							// ?
+						fut := has.raftServer.Apply(evt.Payload, raftTimeout)
+						if err := fut.Error(); err != nil {
+							has.store.logger.Printf("[DEBUG] raft: Error apply > %v", err)
 						}
 					}
 				}
@@ -94,10 +95,22 @@ func (has *HaStore) Start(peers ...string) error {
 	}
 }
 
-func (has *HaStore) List(values interface{}) error {
+func (has *HaStore) Members(members *[]string) error {
+	cFuture := has.raftServer.GetConfiguration()
+	if err := cFuture.Error(); err != nil {
+		return err
+	}
+	config := cFuture.Configuration()
+	for _, server := range config.Servers {
+		*members = append(*members, string(server.Address))
+	}
+	return nil
+}
+
+func (has *HaStore) List(values interface{}, patterns ...string) error {
 	has.mutex.Lock()
 	defer has.mutex.Unlock()
-	return has.store.List(values)
+	return has.store.List(values, patterns...)
 }
 
 func (has *HaStore) Get(key string, value interface{}) error {

@@ -29,7 +29,7 @@ func (has *HaStore) initRaft() (err error) {
 	}
 	
 	raftConf.LocalID = raft.ServerID(raftAddr)
-	raftConf.LogOutput = has.LogOutput
+	raftConf.Logger = has.store.logger
 
 	has.raftServer, err = raft.NewRaft(raftConf, (*fsm)(has), raftStore, raftStore, raftSnaps, raftTrans)
 	return
@@ -37,9 +37,6 @@ func (has *HaStore) initRaft() (err error) {
 
 func (has *HaStore) raftStores() (store *raftboltdb.BoltStore, snapshot *raft.FileSnapshotStore, err error) {
 	var db_path string = "/tmp"
-	// if db_path, err = os.Getwd(); err != nil {
-	// 	return
-	// }
 	raft_id := fmt.Sprintf("%x", md5.Sum([]byte( has.RaftAddr() )))
 
 	db_path = filepath.Join(db_path, raft_id)
@@ -53,7 +50,7 @@ func (has *HaStore) raftStores() (store *raftboltdb.BoltStore, snapshot *raft.Fi
 	if store, err = raftboltdb.NewBoltStore(db_file); err != nil {
 		return
 	}
-	snapshot, err = raft.NewFileSnapshotStore(db_path, retainSnapshotCount, os.Stderr)
+	snapshot, err = raft.NewFileSnapshotStoreWithLogger(db_path, retainSnapshotCount, has.store.logger)
 	return
 }
 
@@ -63,7 +60,7 @@ func (has *HaStore) raftTransport() (transport *raft.NetworkTransport, err error
 	if tcpAddr, err = net.ResolveTCPAddr("tcp", raftAddr); err != nil {
 		return
 	}
-	transport, err = raft.NewTCPTransport(raftAddr, tcpAddr, 3, 10*time.Second, os.Stderr)
+	transport, err = raft.NewTCPTransportWithLogger(raftAddr, tcpAddr, 3, 10*time.Second, has.store.logger)
 	return
 }
 

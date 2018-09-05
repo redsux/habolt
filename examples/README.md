@@ -4,7 +4,7 @@
 
 Create image :
 
-`docker-compose build image`
+`docker-compose build --force-rm image`
 
 ## Run node 1
 
