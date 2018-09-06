@@ -2,7 +2,6 @@ package habolt
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -22,9 +21,8 @@ type HaStore struct {
 	
 	store	   *Store
 
-	BindAddr   string
-	Address    string
-	Port       int
+	Bind       *HaListen
+	Advertise  *HaListen
 
 	raftServer *raft.Raft
 	serfServer *serf.Serf
@@ -32,16 +30,15 @@ type HaStore struct {
 	serfEvents chan serf.Event
 }
 
-func NewHaStore(addr, bindAddr string, port int, opts Options) (*HaStore, error) {
+func NewHaStore(bindAddr, advAddr *HaListen, opts Options) (*HaStore, error) {
 	db, err := NewStore(opts)
 	if err != nil {
 		return nil, err
 	}
 	obj := &HaStore{
 		store: db,
-		BindAddr: bindAddr,
-		Address: addr,
-		Port: port,
+		Bind: bindAddr,
+		Advertise: advAddr,
 	}
 	if err := obj.initSerf(); err != nil {
 		return nil, err
@@ -56,27 +53,11 @@ func (has *HaStore) LogLevel(level int) {
 	has.store.LogLevel(level)
 }
 
-func (has *HaStore) advAddr() string {
-	if has.BindAddr != "" {
-		return has.BindAddr
+func (has *HaStore) realAddr() *HaListen {
+	if has.Advertise == nil || has.Advertise.Address == "" {
+		return has.Bind
 	}
-	return has.Address
-}
-
-func (has *HaStore) SerfAddr(adv ...bool) string {
-	addr := has.Address
-	if len(adv) > 0 && adv[0] {
-		addr = has.advAddr()
-	}
-	return fmt.Sprintf("%s:%d", addr, has.Port)
-}
-
-func (has *HaStore) RaftAddr(adv ...bool) string {
-	addr := has.Address
-	if len(adv) > 0 && adv[0] {
-		addr = has.advAddr()
-	}
-	return fmt.Sprintf("%s:%d", addr, has.Port + 1)
+	return has.Advertise
 }
 
 func (has *HaStore) Start(peers ...string) error {
@@ -122,9 +103,6 @@ func (has *HaStore) Members(members *[]string) error {
 	for _, server := range config.Servers {
 		*members = append(*members, string(server.ID))
 	}
-	// for _, server := range has.serfServer.Memberlist().Members() {
-	// 	*members = append(*members, server.Name )
-	// }
 	return nil
 }
 
@@ -145,7 +123,7 @@ func (has *HaStore) Set(key string, value interface{}) error {
 		Op:    "set",
 		Key:   key,
 		Value: value,
-		Addr:  has.RaftAddr(),
+		Addr:  has.realAddr().Raft().String(),
 	}
 	msg, err := json.Marshal(c)
 	if err != nil {
@@ -156,9 +134,9 @@ func (has *HaStore) Set(key string, value interface{}) error {
 
 func (has *HaStore) Delete(key string) error {
 	c := &command{
-		Op:    "del",
-		Key:   key,
-		Addr:  has.RaftAddr(),
+		Op:   "del",
+		Key:  key,
+		Addr: has.realAddr().Raft().String(),
 	}
 	msg, err := json.Marshal(c)
 	if err != nil {

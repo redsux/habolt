@@ -18,16 +18,18 @@ var (
 	serfPort int
 	dbPath   string
 	logLevel int
-	bind     string
+	bindIp   string
+	bindPort int
 )
 
 func init() {
 	flag.StringVar(&name, "name", "toto", "Cluster node name (default: toto)")
 	flag.StringVar(&members, "members", "", "Cluster members (to join exisiting) split by comma, ex: 127.0.0.1:1111,127.0.0.1:2222")
-	flag.IntVar(&serfPort, "serfPort", 0, "Serf Port (Raft Port = Serf Port +1), ex: 1111")
+	flag.IntVar(&serfPort, "serfPort", 10001, "Serf Port (Raft Port = Serf Port +1), ex: 1111")
 	flag.StringVar(&dbPath, "db", "./node.db", "DB Path, default : ./node.db")
 	flag.IntVar(&logLevel, "level", 1, "Log level (0 = DEBUG, 1 = INFO, 2 = WARNING, 3 = ERROR)")
-	flag.StringVar(&bind, "bindIp", "", "IP address")
+	flag.StringVar(&bindIp, "bindIp", "", "NAT IP used")
+	flag.IntVar(&bindPort, "bindPort", -1, "NAT Port used")
 }
 
 type Toto struct {
@@ -47,7 +49,7 @@ func (t *Toto) Key() string {
 }
 
 func main() {
-
+	var bAddr *habolt.HaListen
 	flag.Parse()
 
 	var peers []string
@@ -60,7 +62,16 @@ func main() {
 		log.Fatal("Ip error")
 	}
 
-	HAS, err := habolt.NewHaStore(ip, bind, serfPort, habolt.Options{Path: dbPath})
+	if bindPort == -1 {
+		bindPort = serfPort
+	}
+
+	rAddr := habolt.NewListen(ip, serfPort)
+	if bindIp != "" {
+		bAddr = habolt.NewListen(bindIp, bindPort)
+	}
+
+	HAS, err := habolt.NewHaStore(rAddr, bAddr, habolt.Options{Path: dbPath})
 	if err != nil {
 		log.Fatal(err)
 	}
