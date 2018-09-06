@@ -16,13 +16,13 @@ type command struct {
 type fsm HaStore
 
 func (f *fsm) Apply(l *raft.Log) interface{} {
-	f.store.logger.Printf( "[DEBUG] raft-fsm: Apply %s\n", string(l.Data) )
+	f.store.logger.Printf( "[DEBUG] fsm: Apply %s\n", string(l.Data) )
 	var (
 		c command
 		e error
 	)
 	if err := json.Unmarshal(l.Data, &c); err != nil {
-		f.store.logger.Printf( "[ERR] raft-fsm: Failed to unmarshal command: %s", err.Error())
+		f.store.logger.Printf( "[ERR] fsm: Failed to unmarshal command: %s", err.Error())
 	}
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -35,7 +35,7 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case "delete":
 		e = f.store.Delete(c.Key)
 	default:
-		f.store.logger.Printf( "[ERR] raft-fsm: Unrecognized command op: %s", c.Op)
+		f.store.logger.Printf( "[ERR] fsm: Unrecognized command op: %s", c.Op)
 	}
 
 	return e

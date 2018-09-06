@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net"
 	"strings"
 	"time"
 
 	"github.com/redsux/habolt"
+	"github.com/hashicorp/go-sockaddr"
 )
 
 var (
@@ -17,6 +17,8 @@ var (
 	members  string
 	serfPort int
 	dbPath   string
+	logLevel int
+	bind     string
 )
 
 func init() {
@@ -24,6 +26,8 @@ func init() {
 	flag.StringVar(&members, "members", "", "Cluster members (to join exisiting) split by comma, ex: 127.0.0.1:1111,127.0.0.1:2222")
 	flag.IntVar(&serfPort, "serfPort", 0, "Serf Port (Raft Port = Serf Port +1), ex: 1111")
 	flag.StringVar(&dbPath, "db", "./node.db", "DB Path, default : ./node.db")
+	flag.IntVar(&logLevel, "level", 1, "Log level (0 = DEBUG, 1 = INFO, 2 = WARNING, 3 = ERROR)")
+	flag.StringVar(&bind, "bindIp", "", "IP address")
 }
 
 type Toto struct {
@@ -51,16 +55,17 @@ func main() {
 		peers = strings.Split(members, ",")
 	}
 
-	ip := GetInternalIP()
-	if ip == "" {
+	ip, err := sockaddr.GetInterfaceIP("eth0")
+	if err != nil || ip == "" {
 		log.Fatal("Ip error")
 	}
 
-	HAS, err := habolt.NewHaStore(ip, serfPort, habolt.Options{Path: dbPath})
+	HAS, err := habolt.NewHaStore(ip, bind, serfPort, habolt.Options{Path: dbPath})
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	HAS.LogLevel( logLevel )
+	
 	go HAS.Start(peers...)
 
 	ticker  := time.NewTicker( time.Duration(4 + rand.Intn(6)) * time.Second) // between 4 and 10 sec
@@ -86,28 +91,6 @@ func main() {
 					fmt.Printf("\tMember : %s\n", s)
 				}
 			}
-			HAS.LogLevel( rand.Intn(3) )
 		}
 	}
-}
-
-func GetInternalIP() string {
-    itf, _ := net.InterfaceByName("eth0")
-    item, _ := itf.Addrs()
-    var ip net.IP
-    for _, addr := range item {
-        switch v := addr.(type) {
-        case *net.IPNet:
-            if !v.IP.IsLoopback() {
-                if v.IP.To4() != nil {//Verify if IP is IPV4
-                    ip = v.IP
-                }
-            }
-        }
-    }
-    if ip != nil {
-        return ip.String()
-    } else {
-        return ""
-    }
 }

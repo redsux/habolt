@@ -11,9 +11,11 @@ import (
 func (has *HaStore) initSerf() (err error) {
 	has.serfEvents = make(chan serf.Event, 16)
 
-	memberlistConfig := memberlist.DefaultLANConfig()
-	memberlistConfig.BindAddr = has.Address
+	memberlistConfig := memberlist.DefaultWANConfig()
+	//memberlistConfig.BindAddr = has.Address // default "0.0.0.0"
 	memberlistConfig.BindPort = has.Port
+	memberlistConfig.AdvertiseAddr = has.advAddr()
+	memberlistConfig.AdvertisePort = has.Port
 	memberlistConfig.Logger = has.store.logger
 
 	serfConfig := serf.DefaultConfig()
@@ -22,18 +24,17 @@ func (has *HaStore) initSerf() (err error) {
 	serfConfig.MemberlistConfig = memberlistConfig
 	serfConfig.Logger = has.store.logger
 
-
 	has.serfServer, err = serf.Create(serfConfig)
 	return
 }
 
 func (has *HaStore) serfMemberListener(evt serf.MemberEvent) error {
 	for _, member := range evt.Members {
-		var action raft.Future
-
 		changedPeer := fmt.Sprintf("%s:%d", member.Addr.String(), member.Port + 1)
 		peerId := raft.ServerID(changedPeer)
 		peerAddr := raft.ServerAddress(changedPeer)
+
+		var action raft.Future
 
 		switch evt.EventType() {
 		case serf.EventMemberJoin:

@@ -19,7 +19,6 @@ func (has *HaStore) initRaft() (err error) {
 		raftTrans *raft.NetworkTransport
 		raftConf  *raft.Config = raft.DefaultConfig()
 	)
-	raftAddr := has.RaftAddr()
 
 	if raftStore, raftSnaps, err = has.raftStores(); err != nil {
 		return
@@ -28,7 +27,7 @@ func (has *HaStore) initRaft() (err error) {
 		return
 	}
 	
-	raftConf.LocalID = raft.ServerID(raftAddr)
+	raftConf.LocalID = raft.ServerID( has.RaftAddr(true) )
 	raftConf.Logger = has.store.logger
 
 	has.raftServer, err = raft.NewRaft(raftConf, (*fsm)(has), raftStore, raftStore, raftSnaps, raftTrans)
@@ -37,7 +36,7 @@ func (has *HaStore) initRaft() (err error) {
 
 func (has *HaStore) raftStores() (store *raftboltdb.BoltStore, snapshot *raft.FileSnapshotStore, err error) {
 	var db_path string = "/tmp"
-	raft_id := fmt.Sprintf("%x", md5.Sum([]byte( has.RaftAddr() )))
+	raft_id := fmt.Sprintf("%x", md5.Sum([]byte( has.RaftAddr(true) )))
 
 	db_path = filepath.Join(db_path, raft_id)
 	if err = os.RemoveAll(db_path + "/"); err != nil {
@@ -56,29 +55,27 @@ func (has *HaStore) raftStores() (store *raftboltdb.BoltStore, snapshot *raft.Fi
 
 func (has *HaStore) raftTransport() (transport *raft.NetworkTransport, err error) {
 	var tcpAddr *net.TCPAddr
-	raftAddr := has.RaftAddr()
-	if tcpAddr, err = net.ResolveTCPAddr("tcp", raftAddr); err != nil {
+	if tcpAddr, err = net.ResolveTCPAddr("tcp", has.RaftAddr(true)); err != nil {
 		return
 	}
-	transport, err = raft.NewTCPTransportWithLogger(raftAddr, tcpAddr, 3, 10*time.Second, has.store.logger)
+	transport, err = raft.NewTCPTransportWithLogger(has.RaftAddr(), tcpAddr, 3, 10*time.Second, has.store.logger)
 	return
 }
 
 func (has *HaStore) raftBootstrap(peers ...string) error {
-	raftAddr := has.RaftAddr()
+	addr := has.RaftAddr(true)
 	bootstrapConfig := raft.Configuration{
 		Servers: []raft.Server{
 			{
 				Suffrage: raft.Voter,
-				ID:       raft.ServerID(raftAddr),
-				Address:  raft.ServerAddress(raftAddr),
+				ID:       raft.ServerID(addr),
+				Address:  raft.ServerAddress(addr),
 			},
 		},
 	}
 
-	// Add known peers to bootstrap
 	for _, node := range peers {
-		if node != raftAddr {
+		if node != addr {
 			bootstrapConfig.Servers = append(bootstrapConfig.Servers, raft.Server{
 				Suffrage: raft.Voter,
 				ID:       raft.ServerID(node),
