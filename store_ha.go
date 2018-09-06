@@ -2,6 +2,7 @@ package habolt
 
 import (
 	"encoding/json"
+	"log"
 	"sync"
 	"time"
 
@@ -16,32 +17,32 @@ const (
 	raftUserEventName   = "us_hastore_apply"
 )
 
+// HaStore is a wrapper of our StaticStore with Serf & Raft
+// running to replicate all data between nodes.
 type HaStore struct {
-	mutex	   sync.Mutex
-	
-	store	   *Store
-
+	mutex      sync.Mutex
+	store      Store
 	Bind       *HaAddress
 	Advertise  *HaAddress
-
 	raftServer *raft.Raft
 	serfServer *serf.Serf
-
 	serfEvents chan serf.Event
 }
 
+// NewHaStore create a new HaStore, "bindAddr" will be the local IP:PORT listening address
+// "advAddr" will be the advertised IP:PORT address (for NAT Traversal)
 func NewHaStore(bindAddr, advAddr *HaAddress, opts *Options) (*HaStore, error) {
-	db, err := NewStore(opts)
+	db, err := NewStaticStore(opts)
 	if err != nil {
 		return nil, err
 	}
 	obj := &HaStore{
-		store: db,
-		Bind: bindAddr,
+		store:     db,
+		Bind:      bindAddr,
 		Advertise: advAddr,
 	}
 
-	obj.store.logger.Printf(`[INFO] Starting HaStore servers:
+	obj.store.Logger().Printf(`[INFO] Starting HaStore servers:
 	- Serf listening on %s (%s)
 	- Raft listening on %s (%s)`,
 		bindAddr, obj.realAddr(),
@@ -57,6 +58,17 @@ func NewHaStore(bindAddr, advAddr *HaAddress, opts *Options) (*HaStore, error) {
 	return obj, nil
 }
 
+// Close to close the embeded Store
+func (has *HaStore) Close() error {
+	return has.store.Close()
+}
+
+// Logger return the logger of our Store (to implements Store interface)
+func (has *HaStore) Logger() *log.Logger {
+	return has.store.Logger()
+}
+
+// LogLevel to change the log level value (LVL_INFO by DEFAULT)
 func (has *HaStore) LogLevel(level int) {
 	has.store.LogLevel(level)
 }
@@ -68,6 +80,8 @@ func (has *HaStore) realAddr() *HaAddress {
 	return has.Advertise
 }
 
+// Start run the Serf & Raft communication and event handlers
+// You could pass some node's addresses "ip:port" in parameters to join an existing cluster
 func (has *HaStore) Start(peers ...string) error {
 	if len(peers) > 0 {
 		if _, err := has.serfServer.Join(peers, false); err != nil {
@@ -78,22 +92,22 @@ func (has *HaStore) Start(peers ...string) error {
 			return err
 		}
 	}
-	
+
 	for {
 		select {
 		case ev := <-has.serfEvents:
 			leader := has.raftServer.VerifyLeader()
 			if leader.Error() == nil {
 				switch evt := ev.(type) {
-				case serf.MemberEvent :		
+				case serf.MemberEvent:
 					if err := has.serfMemberListener(evt); err != nil {
 						return err
 					}
-				case serf.UserEvent :
+				case serf.UserEvent:
 					if evt.Name == raftUserEventName {
 						fut := has.raftServer.Apply(evt.Payload, raftTimeout)
 						if err := fut.Error(); err != nil {
-							has.store.logger.Printf("[DEBUG] raft: Error apply > %v", err)
+							has.store.Logger().Printf("[DEBUG] raft: Error apply > %v", err)
 						}
 					}
 				}
@@ -102,6 +116,7 @@ func (has *HaStore) Start(peers ...string) error {
 	}
 }
 
+// Members store the list of addresses in our Raft cluster
 func (has *HaStore) Members(members *[]string) error {
 	cFuture := has.raftServer.GetConfiguration()
 	if err := cFuture.Error(); err != nil {
@@ -114,18 +129,27 @@ func (has *HaStore) Members(members *[]string) error {
 	return nil
 }
 
+// ListRaw retreive all key-values as a string without any modification
+func (has *HaStore) ListRaw() (map[string]string, error) {
+	return has.store.ListRaw()
+}
+
+// List retreive all values in our Store, you could filter by keys with wildcard patterns (i.e. "prefix_*")
 func (has *HaStore) List(values interface{}, patterns ...string) error {
 	has.mutex.Lock()
 	defer has.mutex.Unlock()
 	return has.store.List(values, patterns...)
 }
 
+// Get retreive a specific value in our Store thanks its key.
 func (has *HaStore) Get(key string, value interface{}) error {
 	has.mutex.Lock()
 	defer has.mutex.Unlock()
 	return has.store.Get(key, value)
 }
 
+// Set forward the "key"/"value" as an UserEvent to our Serf cluster
+// This event will be catched by the Leader of the Raft server to apply it everywhere
 func (has *HaStore) Set(key string, value interface{}) error {
 	c := &command{
 		Op:    "set",
@@ -140,6 +164,8 @@ func (has *HaStore) Set(key string, value interface{}) error {
 	return has.serfServer.UserEvent(raftUserEventName, msg, false)
 }
 
+// Delete forware the "key"/"value" as an UserEvent to our Serf cluster
+// This event will be catched by the Leader of the Raft server to apply it everywhere
 func (has *HaStore) Delete(key string) error {
 	c := &command{
 		Op:   "del",

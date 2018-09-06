@@ -3,26 +3,29 @@ package habolt
 import (
 	"encoding/json"
 	"io"
+
 	"github.com/hashicorp/raft"
 )
 
 type command struct {
-	Op    string	  `json:"op"`
+	Op    string      `json:"op"`
 	Key   string      `json:"key"`
 	Value interface{} `json:"value,omitempty"`
 	Addr  string      `json:"addr,omitempty"`
 }
 
-type fsm HaStore
+type fsm struct {
+	*HaStore
+}
 
 func (f *fsm) Apply(l *raft.Log) interface{} {
-	f.store.logger.Printf( "[DEBUG] fsm: Apply %s\n", string(l.Data) )
+	f.Logger().Printf("[DEBUG] fsm: Apply %s\n", string(l.Data))
 	var (
 		c command
 		e error
 	)
 	if err := json.Unmarshal(l.Data, &c); err != nil {
-		f.store.logger.Printf( "[ERR] fsm: Failed to unmarshal command: %s", err.Error())
+		f.Logger().Printf("[ERR] fsm: Failed to unmarshal command: %s", err.Error())
 	}
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -35,7 +38,7 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	case "delete":
 		e = f.store.Delete(c.Key)
 	default:
-		f.store.logger.Printf( "[ERR] fsm: Unrecognized command op: %s", c.Op)
+		f.Logger().Printf("[ERR] fsm: Unrecognized command op: %s", c.Op)
 	}
 
 	return e
@@ -50,21 +53,12 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	tx, err := f.store.conn.Begin(false)
+	content, err := f.ListRaw()
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
 
-	// Clone the kvstore into a map for easy transport
-	mapClone := make(map[string]string)
-	
-	curs := tx.Bucket(f.store.bucket).Cursor()
-	for key, val := curs.First(); key != nil; key, val = curs.Next() {
-		mapClone[ string(key) ] = string(val)
-	}
-
-	return &fsmSnapshot{kvMap: mapClone}, tx.Commit()
+	return &fsmSnapshot{kvMap: content}, nil
 }
 
 // Restore stores the key-value store to a previous state.
@@ -73,31 +67,14 @@ func (f *fsm) Restore(kvMap io.ReadCloser) error {
 	if err := json.NewDecoder(kvMap).Decode(&kvSnapshot); err != nil {
 		return err
 	}
-	// f.mutex.Lock()
-	// defer f.mutex.Unlock()
-	
-	tx, err := f.store.conn.Begin(true)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	
-	if err := tx.DeleteBucket(f.store.bucket); err != nil {
-		return err
-	}
-
-	bucket, err := tx.CreateBucketIfNotExists(f.store.bucket)
-	if err != nil {
-		return err
-	}
 
 	for k, v := range kvSnapshot {
-		if err := bucket.Put( []byte(k), []byte(v) ); err != nil {
+		if err := f.store.Set(k, v); err != nil {
 			return err
 		}
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 type fsmSnapshot struct {

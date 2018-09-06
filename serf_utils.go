@@ -14,13 +14,13 @@ func (has *HaStore) initSerf() (err error) {
 	memberlistConfig.BindPort = int(has.Bind.Port)
 	memberlistConfig.AdvertiseAddr = has.realAddr().Address
 	memberlistConfig.AdvertisePort = int(has.realAddr().Port)
-	memberlistConfig.Logger = has.store.logger
+	memberlistConfig.Logger = has.Logger()
 
 	serfConfig := serf.DefaultConfig()
 	serfConfig.NodeName = has.realAddr().String()
 	serfConfig.EventCh = has.serfEvents
 	serfConfig.MemberlistConfig = memberlistConfig
-	serfConfig.Logger = has.store.logger
+	serfConfig.Logger = has.Logger()
 
 	has.serfServer, err = serf.Create(serfConfig)
 	return
@@ -29,7 +29,7 @@ func (has *HaStore) initSerf() (err error) {
 func (has *HaStore) serfMemberListener(evt serf.MemberEvent) error {
 	for _, member := range evt.Members {
 		changedPeer := serfMemberToListen(member).Raft()
-		
+
 		var action raft.Future
 
 		switch evt.EventType() {
