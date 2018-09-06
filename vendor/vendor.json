@@ -113,14 +113,14 @@
 		{
 			"checksumSHA1": "2LpxYGSf068307b7bhAuVjvzLLc=",
 			"path": "golang.org/x/crypto/ed25519",
-			"revision": "182538f80094b6a8efaade63a8fd8e0d9d5843dd",
-			"revisionTime": "2018-08-30T18:34:03Z"
+			"revision": "0709b304e793a5edb4a2c0145f281ecdc20838a4",
+			"revisionTime": "2018-08-31T22:38:59Z"
 		},
 		{
 			"checksumSHA1": "0JTAFXPkankmWcZGQJGScLDiaN8=",
 			"path": "golang.org/x/crypto/ed25519/internal/edwards25519",
-			"revision": "182538f80094b6a8efaade63a8fd8e0d9d5843dd",
-			"revisionTime": "2018-08-30T18:34:03Z"
+			"revision": "0709b304e793a5edb4a2c0145f281ecdc20838a4",
+			"revisionTime": "2018-08-31T22:38:59Z"
 		},
 		{
 			"checksumSHA1": "NjyXtXsaf0ulRJn6HQSP1FqGL4A=",
@@ -153,10 +153,10 @@
 			"revisionTime": "2018-08-25T16:15:26Z"
 		},
 		{
-			"checksumSHA1": "fg6cP5KbsnnxyZshqa32ZT9DgKk=",
+			"checksumSHA1": "WgQgD3yR96GlbII7vo0jrFUEpW4=",
 			"path": "golang.org/x/sys/unix",
-			"revision": "fa5fdf94c78965f1aa8423f0cc50b8b8d728b05a",
-			"revisionTime": "2018-08-31T08:14:39Z"
+			"revision": "8cf3aee429924738c56c34bb819c4ea8273fc434",
+			"revisionTime": "2018-09-06T12:36:02Z"
 		}
 	],
 	"rootPath": "github.com/redsux/habolt"
