@@ -12,4 +12,4 @@ RUN go get -u github.com/kardianos/govendor \
 FROM scratch
 COPY --from=builder /go/bin/node /node
 EXPOSE 10001 10002
-ENTRYPOINT ["/node", "-serfPort", "10001"]
+ENTRYPOINT ["/node", "-listen", ":10001"]

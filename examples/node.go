@@ -15,21 +15,19 @@ import (
 var (
 	name     string
 	members  string
-	serfPort int
 	dbPath   string
 	logLevel int
-	bindIp   string
-	bindPort int
+	listen   string
+	bind     string
 )
 
 func init() {
 	flag.StringVar(&name, "name", "toto", "Cluster node name (default: toto)")
 	flag.StringVar(&members, "members", "", "Cluster members (to join exisiting) split by comma, ex: 127.0.0.1:1111,127.0.0.1:2222")
-	flag.IntVar(&serfPort, "serfPort", 10001, "Serf Port (Raft Port = Serf Port +1), ex: 1111")
 	flag.StringVar(&dbPath, "db", "./node.db", "DB Path, default : ./node.db")
 	flag.IntVar(&logLevel, "level", 1, "Log level (0 = DEBUG, 1 = INFO, 2 = WARNING, 3 = ERROR)")
-	flag.StringVar(&bindIp, "bindIp", "", "NAT IP used")
-	flag.IntVar(&bindPort, "bindPort", -1, "NAT Port used")
+	flag.StringVar(&listen, "listen", ":10001", "Default Serf listening address 'host:port' (Raft Port = Serf + 1), default = ':10001'")
+	flag.StringVar(&bind, "bind", "", "Used for NAT Traversal, advertised listening address 'host:port' (Raft Port = port + 1)")
 }
 
 type Toto struct {
@@ -49,7 +47,11 @@ func (t *Toto) Key() string {
 }
 
 func main() {
-	var bAddr *habolt.HaListen
+	var (
+		err   error
+		lAddr *habolt.HaAddress
+		bAddr *habolt.HaAddress
+	)
 	flag.Parse()
 
 	var peers []string
@@ -57,21 +59,25 @@ func main() {
 		peers = strings.Split(members, ",")
 	}
 
-	ip, err := sockaddr.GetInterfaceIP("eth0")
-	if err != nil || ip == "" {
-		log.Fatal("Ip error")
+	lAddr, err = habolt.NewListen(listen)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if lAddr.Address == "" {
+		if lAddr.Address, err = sockaddr.GetInterfaceIP("eth0"); err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	if bindPort == -1 {
-		bindPort = serfPort
+	if bind != "" {
+		bAddr, err = habolt.NewListen(bind)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
 	}
 
-	rAddr := habolt.NewListen(ip, serfPort)
-	if bindIp != "" {
-		bAddr = habolt.NewListen(bindIp, bindPort)
-	}
-
-	HAS, err := habolt.NewHaStore(rAddr, bAddr, habolt.Options{Path: dbPath})
+	HAS, err := habolt.NewHaStore(lAddr, bAddr, habolt.Options{Path: dbPath})
 	if err != nil {
 		log.Fatal(err)
 	}
