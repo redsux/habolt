@@ -77,7 +77,7 @@ func main() {
 		
 	}
 
-	HAS, err := habolt.NewHaStore(lAddr, bAddr, habolt.Options{Path: dbPath})
+	HAS, err := habolt.NewHaStore(lAddr, bAddr, &habolt.Options{Path: dbPath})
 	if err != nil {
 		log.Fatal(err)
 	}

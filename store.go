@@ -86,7 +86,7 @@ type Store struct {
 }
 
 // New uses the supplied options to open the BoltDB and prepare it for use as a raft backend.
-func NewStore(options Options) (*Store, error) {
+func NewStore(options *Options) (*Store, error) {
 	if !options.isValid() {
 		return nil, ErrMissingPath
 	}
@@ -185,7 +185,7 @@ func (s *Store) List(values interface{}, patterns ...string) error {
 		}
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 func (s *Store) Get(key string, value interface{}) error {

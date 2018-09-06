@@ -30,7 +30,7 @@ type HaStore struct {
 	serfEvents chan serf.Event
 }
 
-func NewHaStore(bindAddr, advAddr *HaAddress, opts Options) (*HaStore, error) {
+func NewHaStore(bindAddr, advAddr *HaAddress, opts *Options) (*HaStore, error) {
 	db, err := NewStore(opts)
 	if err != nil {
 		return nil, err
