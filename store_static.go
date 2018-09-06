@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"github.com/boltdb/bolt"
+	"github.com/hashicorp/go-sockaddr"
 )
 
 // StaticStore is a wrapper of BoltDB which implements our Store interface
@@ -209,6 +210,16 @@ func (s *StaticStore) Delete(key string) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+// Members return "GetPublicIP" from go-sockaddr
+func (s *StaticStore) Members() ([]HaAddress, error) {
+	ip, err := sockaddr.GetPrivateIP()
+	if err != nil {
+		return nil, err
+	}
+	s.logger.Println(ip)
+	return []HaAddress{HaAddress{Address: ip}}, nil
 }
 
 // Sync performs an fsync on the database file handle. This is not necessary

@@ -116,17 +116,22 @@ func (has *HaStore) Start(peers ...string) error {
 	}
 }
 
-// Members store the list of addresses in our Raft cluster
-func (has *HaStore) Members(members *[]string) error {
+// Members retrieved the list of addresses in our Raft cluster
+func (has *HaStore) Members() ([]HaAddress, error) {
 	cFuture := has.raftServer.GetConfiguration()
 	if err := cFuture.Error(); err != nil {
-		return err
+		return nil, err
 	}
+	members := make([]HaAddress, 0)
 	config := cFuture.Configuration()
 	for _, server := range config.Servers {
-		*members = append(*members, string(server.ID))
+		addr, err := NewListen(string(server.ID))
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, *addr)
 	}
-	return nil
+	return members, nil
 }
 
 // ListRaw retreive all key-values as a string without any modification
