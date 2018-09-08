@@ -212,8 +212,8 @@ func (s *StaticStore) Delete(key string) error {
 	return tx.Commit()
 }
 
-// Members return "GetPublicIP" from go-sockaddr
-func (s *StaticStore) Members() ([]HaAddress, error) {
+// Addresses return slice which contains a signe entry : "GetPrivateIP" from go-sockaddr
+func (s *StaticStore) Addresses() ([]HaAddress, error) {
 	ip, err := sockaddr.GetPrivateIP()
 	if err != nil {
 		return nil, err

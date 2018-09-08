@@ -116,8 +116,8 @@ func (has *HaStore) Start(peers ...string) error {
 	}
 }
 
-// Members retrieved the list of addresses in our Raft cluster
-func (has *HaStore) Members() ([]HaAddress, error) {
+// Addresses retrieved the list of addresses in our Raft cluster
+func (has *HaStore) Addresses() ([]HaAddress, error) {
 	cFuture := has.raftServer.GetConfiguration()
 	if err := cFuture.Error(); err != nil {
 		return nil, err

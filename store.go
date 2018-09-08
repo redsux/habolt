@@ -24,7 +24,7 @@ type Store interface {
 	Get(string, interface{}) error
 	Set(string, interface{}) error
 	Delete(string) error
-	Members() ([]HaAddress, error)
+	Addresses() ([]HaAddress, error)
 	Logger() *log.Logger
 	LogLevel(int)
 }

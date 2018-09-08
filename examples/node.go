@@ -104,7 +104,7 @@ func main() {
 				}
 			}
 		case <-ticker3.C:
-			if srvs, err := HAS.Members(); err == nil {
+			if srvs, err := HAS.Addresses(); err == nil {
 				for _, s := range srvs {
 					fmt.Printf("\tMember : %s\n", s.Address)
 				}
