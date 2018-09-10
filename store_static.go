@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"net"
 	"path/filepath"
 	"reflect"
 
@@ -28,6 +29,9 @@ type StaticStore struct {
 
 	// Logger
 	logger *log.Logger
+
+	// Bind IP
+	bindIP  net.IP
 }
 
 // NewStaticStore uses the supplied options to open the BoltDB and prepare it for use as a raft backend.
@@ -214,11 +218,18 @@ func (s *StaticStore) Delete(key string) error {
 
 // Addresses return slice which contains a signe entry : "GetPrivateIP" from go-sockaddr
 func (s *StaticStore) Addresses() ([]HaAddress, error) {
-	ip, err := sockaddr.GetPrivateIP()
-	if err != nil {
-		return nil, err
+	var (
+		ip string
+		err error
+	)
+	if s.bindIP != nil {
+		ip = string(s.bindIP)
+	} else {
+		if ip, err = sockaddr.GetPrivateIP(); err != nil {
+			return nil, err
+		}
 	}
-	s.logger.Println(ip)
+	s.logger.Printf("[DEBUG] StaticStore.Addresses = %s", ip)
 	return []HaAddress{HaAddress{Address: ip}}, nil
 }
 
@@ -227,4 +238,11 @@ func (s *StaticStore) Addresses() ([]HaAddress, error) {
 // database file to sync against the disk.
 func (s *StaticStore) Sync() error {
 	return s.conn.Sync()
+}
+
+// BindTo change the behavior of "Addresses" function to return another IP address
+func (s *StaticStore) BindTo(ip string) {
+	if addr := net.ParseIP(ip); addr != nil {
+		s.bindIP = addr
+	}
 }
