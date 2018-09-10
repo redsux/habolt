@@ -218,12 +218,10 @@ func (s *StaticStore) Delete(key string) error {
 
 // Addresses return slice which contains a signe entry : "GetPrivateIP" from go-sockaddr
 func (s *StaticStore) Addresses() ([]HaAddress, error) {
-	var (
-		ip string
-		err error
-	)
+	var ip string
+	var err error
 	if s.bindIP != nil {
-		ip = string(s.bindIP)
+		ip = s.bindIP.String()
 	} else {
 		if ip, err = sockaddr.GetPrivateIP(); err != nil {
 			return nil, err
