@@ -35,7 +35,7 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 		if c.Value != nil {
 			e = f.store.Set(c.Key, c.Value)
 		}
-	case "delete":
+	case "del":
 		e = f.store.Delete(c.Key)
 	default:
 		f.Logger().Printf("[ERR] fsm: Unrecognized command op: %s", c.Op)
