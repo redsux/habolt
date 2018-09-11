@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
@@ -19,18 +20,39 @@ type HaAddress struct {
 
 // NewListen create a new HaAddress thanks an "ip:port" string
 func NewListen(listen string) (*HaAddress, error) {
-	addr, strPort, err := net.SplitHostPort(listen)
-	if err != nil {
+	var (
+		ips  []net.IP
+		host string
+		port uint64
+		err  error
+	)
+	if !strings.ContainsAny(listen, ":") {
+		host = listen
+		port = 0
+	} else {
+		var strPort string
+		if host, strPort, err = net.SplitHostPort(listen); err != nil {
+			return nil, err
+		}
+		if port, err = strconv.ParseUint(strPort, 10, 16); err != nil {
+			return nil, err
+		}
+	}
+	if host == "" {
+		return &HaAddress{
+			Port:    uint16(port),
+		}, nil
+	}
+	if ips, err = net.LookupIP(host); err != nil {
 		return nil, err
 	}
-	uint64Port, err := strconv.ParseUint(strPort, 10, 16)
-	if err != nil {
-		return nil, err
+	for _, ip := range ips {
+		return &HaAddress{
+			Address: ip.String(),
+			Port:    uint16(port),
+		}, nil
 	}
-	return &HaAddress{
-		Address: addr,
-		Port:    uint16(uint64Port),
-	}, nil
+	return nil, fmt.Errorf("Host %s not valid", host)
 }
 
 // NewAddress create a new HaAddress with an ip string and a port int
