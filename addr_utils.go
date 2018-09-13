@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
+	"github.com/hashicorp/go-sockaddr"
 )
 
 // HaAddress is a helper struct to define our listening
@@ -19,7 +20,7 @@ type HaAddress struct {
 }
 
 // NewListen create a new HaAddress thanks an "ip:port" string
-func NewListen(listen string) (*HaAddress, error) {
+func NewListen(listen string, autoIp ...bool) (*HaAddress, error) {
 	var (
 		ips  []net.IP
 		host string
@@ -39,9 +40,14 @@ func NewListen(listen string) (*HaAddress, error) {
 		}
 	}
 	if host == "" {
-		return &HaAddress{
-			Port:    uint16(port),
-		}, nil
+		if len(autoIp) == 0 || !autoIp[0] {
+			return &HaAddress{
+				Port:    uint16(port),
+			}, nil
+		}
+		if host, err = sockaddr.GetPrivateIP(); err != nil {
+			return nil, err
+		}
 	}
 	if ips, err = net.LookupIP(host); err != nil {
 		return nil, err

@@ -74,10 +74,14 @@ func (has *HaStore) LogLevel(level int) {
 }
 
 func (has *HaStore) realAddr() *HaAddress {
-	if has.Advertise == nil || has.Advertise.Address == "" {
-		return has.Bind
+	if has.isAdv() {
+		return has.Advertise
 	}
-	return has.Advertise
+	return has.Bind
+}
+
+func (has *HaStore) isAdv() bool {
+	return has.Advertise != nil && has.Advertise.Address != ""
 }
 
 // Start run the Serf & Raft communication and event handlers

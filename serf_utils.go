@@ -12,8 +12,10 @@ func (has *HaStore) initSerf() (err error) {
 	memberlistConfig := memberlist.DefaultWANConfig()
 	memberlistConfig.BindAddr = has.Bind.Address
 	memberlistConfig.BindPort = int(has.Bind.Port)
-	memberlistConfig.AdvertiseAddr = has.realAddr().Address
-	memberlistConfig.AdvertisePort = int(has.realAddr().Port)
+	if has.isAdv() {
+		memberlistConfig.AdvertiseAddr = has.Advertise.Address
+		memberlistConfig.AdvertisePort = int(has.Advertise.Port)
+	}
 	memberlistConfig.Logger = has.Logger()
 
 	serfConfig := serf.DefaultConfig()
